@@ -4,9 +4,10 @@ import sqlite3
 
 import pandas as pd
 import requests
-from langchain_core.tools import tool
 
-import requests
+from langchain_core.tools import tool
+import us
+from typing import List,Dict,LiteralString
 
 @tool
 def get_disaster_declaration(state: str,
@@ -83,4 +84,58 @@ def get_disaster_declaration(state: str,
     else:
         return [f"Failed to retrieve data: {response.status_code}"]
 
+@tool
+def get_weather_alerts(state:str)->Dict:
+    """
+    Fetches active weather alerts for a given U.S. state using the National Weather Service (NWS) API.
 
+    This function queries the NWS API for active weather alerts in the specified state and returns the
+    details of any alerts that are currently in effect. The state is identified by its two-letter 
+    abbreviation or its full name (e.g., 'FL', 'Florida', 'NY', 'New York').
+
+    Parameters:
+    state (str): The name or two-letter abbreviation of the state for which to fetch weather alerts. 
+                 Example: 'FL' for Florida, 'CA' for California.
+
+    Returns:
+    dict: A list of active weather alerts for the state in the form of a dictionary. 
+          Each alert contains details like the event type, description, and affected areas.
+    
+    Returns:
+    str: If no active alerts are found, returns a message indicating that there are no alerts 
+         for the specified state.
+
+    Raises:
+    requests.exceptions.RequestException: If there is an error with the HTTP request to the NWS API.
+    
+    Example:
+    >>> get_weather_alerts('FL')
+    [{'id': '...', 'event': 'Severe Thunderstorm Warning', 'area': 'Miami-Dade County', ...}, ...]
+
+    If no active alerts are found for the state:
+    >>> get_weather_alerts('NY')
+    "No active alerts for NY."
+    """
+    state = us.states.lookup(state)
+    if state:
+        url = f"https://api.weather.gov/alerts/active?area={state.abbr.upper()}"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Check for HTTP errors
+            
+            alerts_data = response.json()
+            
+            # Check if there are any alerts
+            if alerts_data.get("features"):
+                ## TODO extract only important keys 
+                return alerts_data["features"]
+            else:
+                return f"No active alerts for {state.abbr.upper()}."
+
+        except requests.exceptions.RequestException as e:
+            return f"An error occurred: {e}"
+    return "A state by this name doesn't exist in USA"
+
+@tool
+def weather_forecast(city:str,units:str)->Dict:
+    pass
