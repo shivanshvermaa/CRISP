@@ -2,7 +2,6 @@ import os
 import logging
 from pathlib import Path
 from sqlalchemy import create_engine, text
-from llama_index import VectorStoreIndex, SimpleDirectoryReader, SimpleNodeParser
 from llama_index.vector_stores.postgres import PGVectorStore
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.storage.docstore import SimpleDocumentStore
@@ -15,6 +14,28 @@ logging.basicConfig(level=logging.INFO)
 
 # Supported file types and their readers
 file_extensions = [".pdf", ".docx", ".txt", ".md", ".html"]
+
+def create_index_table(db_url, index_table_name):
+    """Create the index table if it does not exist."""
+    engine = create_engine(db_url)
+    create_table_query = f"""
+    CREATE EXTENSION IF NOT EXISTS vector;
+
+    CREATE TABLE IF NOT EXISTS data_rag_{index_table_name} (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        metadata_ JSONB NOT NULL,
+        node_id TEXT NOT NULL,
+        embedding VECTOR(1536)
+    );
+    """
+    try:
+        with engine.connect() as connection:
+            connection.execute(text(create_table_query))
+            logger.info(f"Table data_rag_{index_table_name} created or already exists.")
+    except Exception as e:
+        logger.error(f"Error creating table: {e}")
+
+
 
 def make_db_url(db):
     """Construct the database URL from the configuration dictionary."""
@@ -41,7 +62,10 @@ def delete_existing_content(db_url, index_table_name, file_names):
     try:
         engine = create_engine(db_url)
         with engine.begin() as connection:
-            delete_query = text(f"DELETE FROM data_rag_{index_table_name} WHERE metadata_->>'file_name' IN :file_names;")
+            delete_query = text(f"""
+                                    DELETE FROM data_rag_{index_table_name}
+                                    WHERE metadata_->>'file_name' IN :file_names;
+                                """)
             connection.execute(delete_query, {'file_names': tuple(file_names)})
             logger.info(f"Deleted records for files: {file_names}")
     except Exception as e:
@@ -105,6 +129,7 @@ def compare_metadata(existing_content, incoming_metadata):
 
 def run_indexer(local_folder_path, db_config, index_table_name, chunk_size, chunk_overlap, embedding_model):
     """Main function to run the indexer."""
+    create_index_table(db_url, index_table_name)
     db_url = make_db_url(db_config)
     vector_store = PGVectorStore.from_params(
         database=db_url.split("/")[-1],
