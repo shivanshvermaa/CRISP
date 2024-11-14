@@ -4,10 +4,10 @@ from pathlib import Path
 from sqlalchemy import create_engine, text
 from llama_index.vector_stores.postgres import PGVectorStore
 from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.storage.docstore import SimpleDocumentStore
+from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.node_parser import SentenceSplitter
-from llama_index.schema import Document
+from llama_index.core import Document
 
 logger = logging.getLogger("indexer")
 logging.basicConfig(level=logging.INFO)
