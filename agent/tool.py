@@ -122,7 +122,9 @@ def is_in_evacuation_zone(state: str,
     # TODO: Reduce the returned answers to < 15K tokens and DocuString < 1024 characters.
 
 
-    
+    print(f"state:{state}||latitude:{latitude}||longitude:{longitude}")
+
+
     # Define query parameters
     params = {
         "f": "json", 
@@ -133,6 +135,8 @@ def is_in_evacuation_zone(state: str,
         "where": "1=1", 
         "defaultSR": 102100  
     }
+
+    # TODO Decode location
     
     if state == "FL":
         base_url = "https://services.arcgis.com/3wFbqsFPLeKqOlIK/arcgis/rest/services/KYZ_ZL_Vector_Enriched_Calculated_20230608/FeatureServer/28/query"
@@ -169,10 +173,14 @@ def is_in_evacuation_zone(state: str,
                 zone = attributes.get("Zone") or attributes.get("EZone")
                 #status = attributes.get("STATUS", '')
                 res_zones.add(zone)
-            
+
+            print(f"Your location is in Evacuation Zone(s) {zone}.")
             return f"Your location is in Evacuation Zone(s) {zone}."
         else:
+            print("The location is not within an evacuation zone.")
             return "The location is not within an evacuation zone."
+
+    print(f"Failed to retrieve data: {response.status_code}")
     
     return f"Failed to retrieve data: {response.status_code}"
 
