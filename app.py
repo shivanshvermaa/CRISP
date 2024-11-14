@@ -8,7 +8,7 @@ from langchain_community.llms import OpenAI
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 
-from agent.tool import get_disaster_declaration
+from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts
 from agent.graph import create_graph
 
 import dotenv
@@ -24,8 +24,11 @@ def main():
         max_retries=2,
     )
 
-    tools = [get_disaster_declaration]
+    tools = [get_disaster_declaration,
+             is_in_evacuation_zone,
+             get_weather_alerts]
 
+    # TODO Improve this zx
     primary_assistant_prompt = ChatPromptTemplate.from_messages(
         [
             (

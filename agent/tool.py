@@ -84,6 +84,8 @@ def get_disaster_declaration(state: str,
     else:
         return [f"Failed to retrieve data: {response.status_code}"]
 
+
+@tool
 def is_in_evacuation_zone(state: str,
                           latitude: float,
                           longitude: float) -> str:
@@ -101,25 +103,25 @@ def is_in_evacuation_zone(state: str,
         The longitude of the location to check.
 
     Returns:
-    -------
     str
         A message indicating the evacuation zone(s) for the location, or an error message if the data could not be retrieved.
-        
+
     Notes:
-    -----
-    - For Florida (FL), the function uses a point-based query (`esriGeometryPoint`) to check if the location
+
+    - For Florida (FL)  function uses a point-based query (`esriGeometryPoint`) to check if the location
       lies within any evacuation zone.
-    - For Texas (TX), the function approximates a point query by using a small bounding box (envelope) with 
+    - For Texas (TX)  function approximates a point query by using a small bounding box (envelope) with
       an intersect relationship (`esriGeometryEnvelope`) to determine if the location falls within any evacuation zone.
-      
+
     Example:
     -------
     >>> is_in_evacuation_zone("FL", 27.994402, -81.760254)
     'Your location is in Evacuation Zone(s) A.'
-    
-    >>> is_in_evacuation_zone("TX", 30.267153, -97.743057)
-    'The location is not within an evacuation zone.'
     """
+
+    # TODO: Reduce the returned answers to < 15K tokens and DocuString < 1024 characters.
+
+
     
     # Define query parameters
     params = {
@@ -176,7 +178,7 @@ def is_in_evacuation_zone(state: str,
 
 
 @tool
-def get_weather_alerts(state:str)->Dict:
+def get_weather_alerts(state:str) -> Dict:
     """
     Fetches active weather alerts for a given U.S. state using the National Weather Service (NWS) API.
 
@@ -195,18 +197,13 @@ def get_weather_alerts(state:str)->Dict:
     Returns:
     str: If no active alerts are found, returns a message indicating that there are no alerts 
          for the specified state.
-
-    Raises:
-    requests.exceptions.RequestException: If there is an error with the HTTP request to the NWS API.
     
     Example:
     >>> get_weather_alerts('FL')
-    [{'id': '...', 'event': 'Severe Thunderstorm Warning', 'area': 'Miami-Dade County', ...}, ...]
-
-    If no active alerts are found for the state:
-    >>> get_weather_alerts('NY')
-    "No active alerts for NY."
     """
+
+    # TODO: Reduce the returned answers to < 15K tokens
+
     state = us.states.lookup(state)
     if state:
         url = f"https://api.weather.gov/alerts/active?area={state.abbr.upper()}"
@@ -218,8 +215,9 @@ def get_weather_alerts(state:str)->Dict:
             
             # Check if there are any alerts
             if alerts_data.get("features"):
-                ## TODO extract only important keys 
-                return alerts_data["features"]
+                ## TODO extract only important keys Very Imp
+                print(alerts_data["features"][0])
+                return alerts_data["features"][:10]
             else:
                 return f"No active alerts for {state.abbr.upper()}."
 
@@ -227,6 +225,6 @@ def get_weather_alerts(state:str)->Dict:
             return f"An error occurred: {e}"
     return "A state by this name doesn't exist in USA"
 
-@tool
-def weather_forecast(city:str,units:str)->Dict:
-    pass
+# @tool
+# def weather_forecast(city:str,units:str)->Dict:
+#     pass
