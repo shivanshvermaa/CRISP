@@ -43,24 +43,33 @@ class RAGQueryEngine(CustomQueryEngine):
 
     def custom_query(self, query_str: str, conversation_history: str = ""):
         nodes = self.retriever.retrieve(query_str)
+        if not nodes:
+            logging.warning("No relevant nodes found for the query.")
+            # Create a simple response object with a 'response' attribute.
+            response_obj = type("Response", (object,), {"response": "No relevant information found"})
+            return response_obj, []
+
+
         i = 0
         rag_retrieved_details = []
+        logging.info("Retrieved nodes:")
         for x in nodes:
-           i = i + 1
-           print(f'## Document {i} ##')
-           print(x)
-           docu_info = {}
-           docu_info['chunk'] = x.get_text()
-           docu_info['score'] = x.get_score()
-           docu_info['node_id'] = x.node_id
-           docu_info['file_name'] = x.metadata['file_name']
-           docu_info['container'] = x.metadata['container']
-           rag_retrieved_details.append(docu_info)
-           
-        print('## END ##')
+            i += 1
+            logging.info(f"Node {i}: {x.get_text()[:100]} (Score: {x.get_score()})")
+            docu_info = {
+                'chunk': x.get_text(),
+                'score': x.get_score(),
+                'node_id': x.node_id,
+                'file_name': x.metadata.get('file_name', 'Unknown')
+            }
+            rag_retrieved_details.append(docu_info)
 
         response_obj = self.response_synthesizer.synthesize(query_str, nodes, conversation_history=conversation_history)
+        if not response_obj.response:
+            response_obj.response = "No relevant information found."
+
         return response_obj, rag_retrieved_details
+
 
 query_engines = {}
 DEFAULT_QA_TEMPLATE = (
@@ -75,15 +84,19 @@ DEFAULT_QA_TEMPLATE = (
 def get_query_engine_by_index_name(name, prompt='', conversation_history='', top_k=5):
     if name not in query_engines:
         url = make_url(os.getenv("VECTOR_DATABASE_URL"))
-        vector_store = PGVectorStore.from_params(
-            database=url.database,
-            host=url.host,
-            password=url.password,
-            port=url.port,
-            user=url.username,
-            table_name="rag_" + name,
-            embed_dim=1536,
-        )
+        try:
+            vector_store = PGVectorStore.from_params(
+                database=url.database,
+                host=url.host,
+                password=url.password,
+                port=url.port,
+                user=url.username,
+                table_name = "rag_" + name, 
+                embed_dim=1536,
+            )
+        except Exception as e:
+            logging.error(f"Error initializing vector store for index '{name}': {e}")
+            return None
 
         if (prompt == ''):
             prompt = DEFAULT_QA_TEMPLATE
@@ -150,6 +163,9 @@ def query_kb():
     token_counter.reset_counts()
 
     query_engine = get_query_engine_by_index_name(index, prompt, conversation_history, top_k)
+    if query_engine is None:
+        return jsonify({"error": "Failed to initialize query engine for the given index."}), 500
+
     response, rag_chunk_details = query_engine.custom_query(question, conversation_history)
 
     print("Response: " + response.response)
@@ -188,8 +204,13 @@ def kb_status():
             port = url.port) as connection:
         connection.autocommit = True
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT COUNT(*) FROM data_rag_{index}")
-            chunk_count = cursor.fetchone()[0]
+            try:
+                cursor.execute(f"SELECT COUNT(*) FROM data_rag_{index}")
+                chunk_count = cursor.fetchone()[0]
+            except Exception as e:
+                logging.error(f"Error fetching chunk count: {e}")
+                chunk_count = 0
+
 
         with connection.cursor() as cursor:
             cursor.execute(f"select count(*) from (select distinct metadata_->>'file_name' from data_rag_{index}) as temp")

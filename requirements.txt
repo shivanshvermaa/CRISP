@@ -1,0 +1,9 @@
+sqlalchemy
+llama-index
+PyPDF2
+python-docx
+beautifulsoup4
+Flask>=2.2.2
+requests
+python-dotenv
+llama-index-vector-stores-postgres

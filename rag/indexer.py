@@ -71,7 +71,7 @@ def delete_existing_content(db_url, index_table_name, file_names):
     except Exception as e:
         logger.error(f"Error deleting content: {e}")
 
-def load_files_from_folder(folder_path):
+def load_files_from_folder(folder_path, chunk_size, chunk_overlap):
     """Load documents from the specified folder."""
     documents = []
     for root, _, files in os.walk(folder_path):
@@ -81,10 +81,13 @@ def load_files_from_folder(folder_path):
                 continue
             file_path = os.path.join(root, file)
             metadata = {
-                'file_name': file,
-                'file_size': os.path.getsize(file_path),
-                'last_modified_date': os.path.getmtime(file_path)
-            }
+                        'file_name': file,
+                        'file_size': os.path.getsize(file_path),
+                        'last_modified_date': os.path.getmtime(file_path),
+                        'chunk_size': chunk_size,
+                        'chunk_overlap': chunk_overlap
+                    }
+
             try:
                 if ext == ".txt":
                     with open(file_path, 'r', encoding='utf-8') as f:
@@ -122,15 +125,19 @@ def compare_metadata(existing_content, incoming_metadata):
     updated_files = []
     for file_name, incoming_meta in incoming_files.items():
         existing_meta = existing_files.get(file_name, {}).get('metadata_', {})
+        # Check for changes in file size, last modified date, chunk size, or chunk overlap
         if (existing_meta.get('file_size') != incoming_meta['file_size'] or
-            existing_meta.get('last_modified_date') != incoming_meta['last_modified_date']):
+            existing_meta.get('last_modified_date') != incoming_meta['last_modified_date'] or
+            existing_meta.get('chunk_size') != incoming_meta['chunk_size'] or
+            existing_meta.get('chunk_overlap') != incoming_meta['chunk_overlap']):
             updated_files.append(file_name)
     return updated_files
 
+
 def run_indexer(local_folder_path, db_config, index_table_name, chunk_size, chunk_overlap, embedding_model):
     """Main function to run the indexer."""
-    create_index_table(db_url, index_table_name)
     db_url = make_db_url(db_config)
+    create_index_table(db_url, index_table_name)
     vector_store = PGVectorStore.from_params(
         database=db_url.split("/")[-1],
         host=db_config['hostname'],
@@ -145,13 +152,23 @@ def run_indexer(local_folder_path, db_config, index_table_name, chunk_size, chun
     existing_content = fetch_existing_content(db_url, index_table_name)
 
     # Load new documents from the local folder
-    documents = load_files_from_folder(local_folder_path)
+    documents = load_files_from_folder(local_folder_path, chunk_size, chunk_overlap)
     if not documents:
         logger.info("No documents found to index.")
         return
 
     # Extract metadata and compare
-    incoming_metadata = [{'file_name': doc.extra_info['file_name'], 'file_size': doc.extra_info['file_size'], 'last_modified_date': doc.extra_info['last_modified_date']} for doc in documents]
+    incoming_metadata = [
+            {
+                'file_name': doc.extra_info['file_name'],
+                'file_size': doc.extra_info['file_size'],
+                'last_modified_date': doc.extra_info['last_modified_date'],
+                'chunk_size': doc.extra_info.get('chunk_size'),
+                'chunk_overlap': doc.extra_info.get('chunk_overlap')
+            }
+            for doc in documents
+        ]
+
     files_to_reindex = compare_metadata(existing_content, incoming_metadata)
 
     if not files_to_reindex:
