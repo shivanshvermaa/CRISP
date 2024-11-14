@@ -1,6 +1,5 @@
 # Title Here
 
-This project sets up a vector-based retrieval system using PostgreSQL and the `pgvector` extension for efficient vector similarity searches.
 
 ## Prerequisites
 
