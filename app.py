@@ -16,9 +16,9 @@ import dotenv
 dotenv.load_dotenv()
 
 # Start the Flask server as a subprocess
-def start_flask_server():
-    subprocess.Popen(["python", "rag/retriever.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-start_flask_server()
+#def start_flask_server():
+#    subprocess.Popen(["python", "rag/retriever.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#start_flask_server()
 
 @cl.on_chat_start
 def main():

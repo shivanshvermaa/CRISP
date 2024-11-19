@@ -8,15 +8,18 @@ from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core import Document
+from sqlalchemy import make_url
+
 
 logger = logging.getLogger("indexer")
 logging.basicConfig(level=logging.INFO)
 
 # Supported file types and their readers
 file_extensions = [".pdf", ".docx", ".txt", ".md", ".html"]
-
+embedding_model = "text-embedding-ada-002"
 def create_index_table(db_url, index_table_name):
     """Create the index table if it does not exist."""
+    logger.info(f"Attempting to create table: data_rag_{index_table_name}")
     engine = create_engine(db_url)
     create_table_query = f"""
     CREATE EXTENSION IF NOT EXISTS vector;
@@ -134,19 +137,27 @@ def compare_metadata(existing_content, incoming_metadata):
     return updated_files
 
 
-def run_indexer(local_folder_path, db_config, index_table_name, chunk_size, chunk_overlap, embedding_model):
+def run_indexer(local_folder_path, index_table_name, chunk_size, chunk_overlap):
     """Main function to run the indexer."""
-    db_url = make_db_url(db_config)
+    db_url = make_url(os.getenv("VECTOR_DATABASE_URL"))
+    try:
+        logger.info("Connecting to vector store with URL parameters:")
+        logger.info(f"Database: {db_url.database}, Host: {db_url.host}, User: {db_url.username}, Port: {db_url.port}")
+        
+        vector_store = PGVectorStore.from_params(
+            database=db_url.database,
+            host=db_url.host,
+            password=db_url.password,
+            port=db_url.port,
+            user=db_url.username,
+            table_name=f"rag_{index_table_name}",
+            embed_dim=1536,
+        )
+        logger.info("Vector store initialized successfully.")
+    except Exception as e:
+        logging.info(f"Error initializing vector store for index '{index_table_name}': {e}")
+        return None
     create_index_table(db_url, index_table_name)
-    vector_store = PGVectorStore.from_params(
-        database=db_url.split("/")[-1],
-        host=db_config['hostname'],
-        password=db_config['password'],
-        port=db_config['port'],
-        user=db_config['username'],
-        table_name=f"rag_{index_table_name}",
-        embed_dim=1536
-    )
 
     # Fetch existing content
     existing_content = fetch_existing_content(db_url, index_table_name)
@@ -193,5 +204,6 @@ def run_indexer(local_folder_path, db_config, index_table_name, chunk_size, chun
     )
 
     logger.info("Running ingestion pipeline.")
+    #logger.info(f"Documents to reindex: {[doc.extra_info for doc in documents_to_reindex]}")
     pipeline.run(documents=documents_to_reindex)
     logger.info("Indexing complete.")

@@ -248,17 +248,8 @@ def run_indexer_endpoint():
         index_table_name = data['index_table_name']
         chunk_size = data.get('chunk_size', 512)
         chunk_overlap = data.get('chunk_overlap', 64)
-        embedding_model = data.get('embedding_model', 'text-embedding-ada-002')
 
-        db_config = {
-            'username': os.getenv('DB_USERNAME'),
-            'password': os.getenv('DB_PASSWORD'),
-            'hostname': os.getenv('DB_HOSTNAME'),
-            'port': os.getenv('DB_PORT', 5432),
-            'dbname': os.getenv('DB_NAME')
-        }
-
-        run_indexer(folder_path, db_config, index_table_name, chunk_size, chunk_overlap, embedding_model)
+        run_indexer(folder_path, index_table_name, chunk_size, chunk_overlap)
         return jsonify({"status": "Indexing complete"}), 200
     except Exception as e:
         logging.error(f"Error running indexer: {e}")
