@@ -66,45 +66,49 @@ Below is a sample code snippet for ingestion and retrieval queries.
 
 ```python
 import os
+import requests
 
 if __name__ == "__main__":
-    # Configuration for the local folder and database
-    local_folder_path = "/path/to/your/documents"
-    index_table_name = "example_index"
-    
-    # Database configuration dictionary
-    db_config = {
-        "username": "your_db_username",
-        "password": "your_db_password",
-        "hostname": "localhost",
-        "port": 5432,
-        "dbname": "your_db_name"
+    # Define the URL of your Flask server
+    url = "http://localhost:5015/run_indexer"
+    headers = {"Content-Type": "application/json"}
+    # Disable proxy for local requests
+    proxies = {
+        "http": None,
+        "https": None
     }
 
+    # Configuration for the local folder and database
+    local_folder_path = "path"
+    index_table_name = "test"
+    
     # Chunk size and overlap settings
     chunk_size = 256  # Number of tokens or characters per chunk
     chunk_overlap = 32  # Overlapping tokens/characters between chunks
-
-    # Embedding model to use (e.g., OpenAI's text-embedding-ada-002)
-    embedding_model = "text-embedding-ada-002"
 
     # Check if the local folder path exists
     if not os.path.exists(local_folder_path):
         raise FileNotFoundError(f"Local folder path does not exist: {local_folder_path}")
 
-    # Run the indexer with the specified parameters
+    # Prepare the data to send in the POST request
+    payload = {
+        "folder_path": local_folder_path,
+        "index_table_name": index_table_name,
+        "chunk_size": chunk_size,
+        "chunk_overlap": chunk_overlap
+    }
+
+    # Send the POST request
     try:
-        run_indexer(
-            local_folder_path=local_folder_path,
-            db_config=db_config,
-            index_table_name=index_table_name,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            embedding_model=embedding_model
-        )
-        print("Ingestion and indexing process completed successfully.")
+        response = requests.post(url, json=payload, headers=headers, proxies=proxies)
+        if response.status_code == 200:
+            print("Ingestion and indexing process completed successfully.")
+            print("Response:", response.json())
+        else:
+            print(f"Failed to run the indexer. Status Code: {response.status_code}")
+            print("Error Response:", response.json())
     except Exception as e:
-        print(f"An error occurred during the ingestion process: {e}")
+        print(f"An error occurred while making the request: {e}")
 ```
 
 ### Retrieval Code
