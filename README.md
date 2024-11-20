@@ -122,8 +122,8 @@ headers = {"Content-Type": "application/json"}
 
 # Prepare the request data
 query_data = {
-    "q": "Which location are they talking about?",
-    "index": "temp",
+    "q": "what should be my plan to evacuate?",
+    "index": "hurricanefirstaid",
     "prompt": "",
     "top_k": 5,
     "conversation_history": ""
