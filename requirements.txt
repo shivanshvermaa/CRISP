@@ -7,3 +7,5 @@ Flask>=2.2.2
 requests
 python-dotenv
 llama-index-vector-stores-postgres
+chainlit
+langchain_openai

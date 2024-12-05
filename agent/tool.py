@@ -445,121 +445,48 @@ def get_power_outage_map(state:str):
 #     pass
 
 @tool
-def get_nearest_hospital(address:str):
+def query_rag_system(message: str , index:str) -> dict:
     """
-    This Function gets the 10 nearest hospitals for a given address. It expects a well formatted address with street name, city and state as well.
+    Query the retrieval augmented generation (RAG) system and answer the users question based on information stored in table (index).
+
+    Parameters:
+    message (str): Question asked by user. 
+                
+    index (str): The name of the index based on the user message and given details. 
+                Example: 'HurricaneFirstAid' for first aid related message. 
+                 
+    Returns:
+    - dict: A dictionary containing the RAG response and related metadata.
     """
-
-    result = ""
-    
-    google_places = GooglePlaces(GOOGLE_MAPS_API_KEY)
-    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
-    geocode_result = gmaps.geocode(address)
+    # Define the URL of your RAG Flask server
+    url = "http://localhost:5015/ask"
+    headers = {"Content-Type": "application/json"}
 
 
-    if geocode_result:
+    query_data = {
+        "q": message,
+        "index": index,
+        "prompt": "",
+        "top_k": 5,
+        "conversation_history": "",
+    }
 
-        lat = geocode_result[0]['geometry']['location']['lat']
-        lng = geocode_result[0]['geometry']['location']['lng']
+    try:
+        response = requests.post(url, json=query_data, headers=headers)
 
-        query_result = google_places.nearby_search(
-                # lat_lng ={'lat': 46.1667, 'lng': -1.15},
-                lat_lng ={'lat': lat, 'lng': lng},
-                radius = 5000,
-                # types =[types.TYPE_HOSPITAL] or
-                # [types.TYPE_CAFE] or [type.TYPE_BAR]
-                # or [type.TYPE_CASINO])
-                types =[types.TYPE_HOSPITAL])
-
-        # If any attributions related
-        # with search results print them
-        if query_result.has_attributions: 
-            print (query_result.html_attributions)
-
-        
-        # Iterate over the search results
-        for place in query_result.places[:5]:
-            
-            print(place)
-            # place.get_details()
-            print (place.name)
-
-            print (place.name)
-            place_geocoded = gmaps.reverse_geocode((place.geo_location['lat'], place.geo_location['lng']))
-            if place_geocoded:
-                result += f'Place Name : {place.name}\nAddress : {place_geocoded[0]["formatted_address"]}\n' #Latitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}
-                print("Address",place_geocoded[0]["formatted_address"])
-            else:
-                result += f'Place Name : {place.name}\nAddress : Unavailable\nLatitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}\n'
-                print("Address Unvailable")
-            print("Latitude", place.geo_location['lat'])
-            print("Longitude", place.geo_location['lng'])
-            print()
-
-        return result
-
-    else:
-        result = "Incomplete Address! Please provide a Complete Address"
-        print("Incomplete Address! Please provide a Complete Address")
-        return result
-    
-
-@tool
-def get_nearest_fire_station(address:str):
-    """
-    This Function gets the 10 nearest firestations for a given address. It expects a well formatted address with street name, city and state as well.
-    """
-
-    result = ""
-    
-    google_places = GooglePlaces(GOOGLE_MAPS_API_KEY)
-    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
-    geocode_result = gmaps.geocode(address)
-
-
-    if geocode_result:
-
-        lat = geocode_result[0]['geometry']['location']['lat']
-        lng = geocode_result[0]['geometry']['location']['lng']
-
-        query_result = google_places.nearby_search(
-                # lat_lng ={'lat': 46.1667, 'lng': -1.15},
-                lat_lng ={'lat': lat, 'lng': lng},
-                radius = 5000,
-                # types =[types.TYPE_HOSPITAL] or
-                # [types.TYPE_CAFE] or [type.TYPE_BAR]
-                # or [type.TYPE_CASINO])
-                types =[types.TYPE_FIRE_STATION])
-
-        # If any attributions related
-        # with search results print them
-        if query_result.has_attributions: 
-            print (query_result.html_attributions)
-
-        
-        # Iterate over the search results
-        for place in query_result.places[:5]:
-            
-            print(place)
-            # place.get_details()
-            print (place.name)
-
-            print (place.name)
-            place_geocoded = gmaps.reverse_geocode((place.geo_location['lat'], place.geo_location['lng']))
-            if place_geocoded:
-                result += f'Place Name : {place.name}\nAddress : {place_geocoded[0]["formatted_address"]}\n' #Latitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}
-                print("Address",place_geocoded[0]["formatted_address"])
-            else:
-                result += f'Place Name : {place.name}\nAddress : Unavailable\nLatitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}\n'
-                print("Address Unvailable")
-            print("Latitude", place.geo_location['lat'])
-            print("Longitude", place.geo_location['lng'])
-            print()
-
-        return result
-
-    else:
-        result = "Incomplete Address! Please provide a Complete Address"
-        print("Incomplete Address! Please provide a Complete Address")
-        return result
-    
+        if response.status_code == 200:
+            result = response.json()
+            return {
+                "response": result.get("response"),
+                "sources": result.get("sources"),
+                "token_counts": {
+                    "total_embedding": result.get("total_embedding_token_count"),
+                    "prompt_llm": result.get("prompt_llm_token_count"),
+                    "completion_llm": result.get("completion_llm_token_count"),
+                },
+                "rag_chunk_details": result.get("rag_chunk_details"),
+            }
+        else:
+            return {"error": f"Server returned status {response.status_code}: {response.text}"}
+    except requests.RequestException as e:
+        return {"error": f"Request failed: {str(e)}"}
