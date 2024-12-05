@@ -12,7 +12,7 @@ from typing import List,Dict,LiteralString
 @tool
 def get_disaster_declaration(state: str,
                              declarationType: str,
-                             limit: int = 3) -> list:
+                             limit: int = 3) -> str:
     """
        Retrieves formatted disaster declaration summaries from the OpenFEMA API for a specified state and type.
 
@@ -47,42 +47,59 @@ def get_disaster_declaration(state: str,
        """
     base_url = "https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries"
 
-
+    # Parameters for the API request
     params = {
-        "state": state,      # Filter by state (e.g., Texas)
-        "declarationType": declarationType,   # Declaration type (e.g., DR for major disaster)
-        "limit": limit        # Limit the number of results
+        "state": state,                     # Filter by state (e.g., Texas)
+        "declarationType": declarationType, # Declaration type (e.g., DR for major disaster)
     }
 
-    response = requests.get(base_url, params=params)
+    try:
+        # Make the request
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()  # Raise an exception for bad status codes
 
-    if response.status_code == 200:
-        data = response.json()  # Convert response to JSON
+        # Convert response to JSON
+        data = response.json()
         disaster_summaries = data.get("DisasterDeclarationsSummaries", [])
-        disaster_summaries = disaster_summaries[:limit]
+
+
+
+        # Format each disaster entry as a string
         formatted_disasters = []
         for disaster in disaster_summaries:
-            formatted_disasters.append(
-                f"Declaration String: {disaster['femaDeclarationString']}\n"
-                f"State: {disaster['state']}\n"
-                f"Declaration Type: {disaster['declarationType']}\n"
-                f"Title: {disaster['declarationTitle']}\n"
-                f"Incident Type: {disaster['incidentType']}\n"
-                f"Declaration Date: {disaster['declarationDate']}\n"
-                f"Incident Begin Date: {disaster['incidentBeginDate']}\n"
-                f"Incident End Date: {disaster['incidentEndDate']}\n"
-                f"Designated Area: {disaster['designatedArea']}\n"
-                # f"Programs Declared: "
-                # f"IH: {disaster['ihProgramDeclared']}, "
-                # f"IA: {disaster['iaProgramDeclared']}, "
-                # f"PA: {disaster['paProgramDeclared']}, "
-                # f"HM: {disaster['hmProgramDeclared']}\n"
-                f"Region: {disaster['region']}\n"
-                f"Last Refresh: {disaster['lastRefresh']}"
-            )
-        return formatted_disasters
-    else:
-        return [f"Failed to retrieve data: {response.status_code}"]
+
+            if state== disaster.get('state'):
+                formatted_disasters.append(
+                    [f"Disaster ID: {disaster.get('disasterNumber')}\n"
+                    f"Declaration String: {disaster.get('femaDeclarationString')}\n"
+                    f"State: {disaster.get('state')}\n"
+                    f"Declaration Type: {disaster.get('declarationType')}\n"
+                    f"Title: {disaster.get('declarationTitle')}\n"
+                    f"Incident Type: {disaster.get('incidentType')}\n"
+                    f"Declaration Date: {disaster.get('declarationDate')}\n"
+                    f"Incident Begin Date: {disaster.get('incidentBeginDate')}\n"
+                    f"Incident End Date: {disaster.get('incidentEndDate')}\n"
+                    f"Programs Declared: "
+                    f"IH: {disaster.get('ihProgramDeclared')}, "
+                    f"IA: {disaster.get('iaProgramDeclared')}, "
+                    f"PA: {disaster.get('paProgramDeclared')}, "
+                    f"HM: {disaster.get('hmProgramDeclared')}\n"
+                    f"Region: {disaster.get('region')}\n"
+                    f"Last Refresh: {disaster.get('lastRefresh')}\n"]
+                )
+
+        print(len(formatted_disasters[-limit:]))
+
+        formatted_disasters = formatted_disasters[-limit:]
+
+        result = ""
+
+        for disaster in formatted_disasters:
+            result += f"{disaster[0]}\n"
+
+        return result
+    except requests.RequestException as e:
+        return [f"Failed to retrieve data: {e}"]
 
 
 @tool
