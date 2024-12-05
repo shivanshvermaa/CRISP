@@ -12,7 +12,7 @@ from typing import List,Dict,LiteralString
 @tool
 def get_disaster_declaration(state: str,
                              declarationType: str,
-                             limit: int = 3) -> str:
+                             limit: int = 10) -> str:
     """
        Retrieves formatted disaster declaration summaries from the OpenFEMA API for a specified state and type.
 
