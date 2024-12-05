@@ -37,7 +37,7 @@ def get_disaster_declaration(state: str,
 
        Examples:
        --------
-       >>> get_disaster_declaration(state="TX", declarationType="DR", limit=2)
+       >>> get_disaster_declaration(state="TX", declarationType="DR", limit=10)
        ["Disaster ID: 5530...", "Disaster ID: 5531..."]
 
        Notes:
