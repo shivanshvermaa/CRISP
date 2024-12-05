@@ -253,3 +253,50 @@ def get_weather_alerts(state:str) -> Dict:
 # @tool
 # def weather_forecast(city:str,units:str)->Dict:
 #     pass
+
+@tool
+def query_rag_system(message: str , index:str) -> dict:
+    """
+    Query the retrieval augmented generation (RAG) system and answer the users question based on information stored in table (index).
+
+    Parameters:
+    message (str): Question asked by user. 
+                
+    index (str): The name of the index based on the user message and given details. 
+                Example: 'HurricaneFirstAid' for first aid related message. 
+                 
+    Returns:
+    - dict: A dictionary containing the RAG response and related metadata.
+    """
+    # Define the URL of your RAG Flask server
+    url = "http://localhost:5015/ask"
+    headers = {"Content-Type": "application/json"}
+
+
+    query_data = {
+        "q": message,
+        "index": index,
+        "prompt": "",
+        "top_k": 5,
+        "conversation_history": "",
+    }
+
+    try:
+        response = requests.post(url, json=query_data, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            return {
+                "response": result.get("response"),
+                "sources": result.get("sources"),
+                "token_counts": {
+                    "total_embedding": result.get("total_embedding_token_count"),
+                    "prompt_llm": result.get("prompt_llm_token_count"),
+                    "completion_llm": result.get("completion_llm_token_count"),
+                },
+                "rag_chunk_details": result.get("rag_chunk_details"),
+            }
+        else:
+            return {"error": f"Server returned status {response.status_code}: {response.text}"}
+    except requests.RequestException as e:
+        return {"error": f"Request failed: {str(e)}"}
