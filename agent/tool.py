@@ -108,39 +108,34 @@ def is_in_evacuation_zone(state: str,
                           longitude: float) -> str:
     
     """
-    Determines if a given location is within an evacuation zone by querying the relevant state-specific API.
+    Determines if a given location is within an evacuation zone using state-specific APIs.
 
     Parameters:
     ----------
     state : str
-        The state code for which to check the evacuation zone (e.g., "FL" for Florida, "TX" for Texas).
+        State code (e.g., "FL" for Florida, "TX" for Texas).
     latitude : float
-        The latitude of the location to check.
+        Latitude of the location.
     longitude : float
-        The longitude of the location to check.
+        Longitude of the location.
 
     Returns:
+    --------
     str
-        A message indicating the evacuation zone(s) for the location, or an error message if the data could not be retrieved.
+        A message indicating the evacuation zone(s) or an error message if data retrieval fails.
 
     Notes:
-
-    - For Florida (FL)  function uses a point-based query (`esriGeometryPoint`) to check if the location
-      lies within any evacuation zone.
-    - For Texas (TX)  function approximates a point query by using a small bounding box (envelope) with
-      an intersect relationship (`esriGeometryEnvelope`) to determine if the location falls within any evacuation zone.
+    ------
+    - For Florida (FL): Uses a point-based query (`esriGeometryPoint`) to check evacuation zones.
+    - For Texas (TX): Uses a small bounding box (`esriGeometryEnvelope`) with an intersect relationship to approximate point queries.
 
     Example:
-    -------
+    --------
     >>> is_in_evacuation_zone("FL", 27.994402, -81.760254)
     'Your location is in Evacuation Zone(s) A.'
     """
 
-    # TODO: Reduce the returned answers to < 15K tokens and DocuString < 1024 characters.
-
-
     print(f"state:{state}||latitude:{latitude}||longitude:{longitude}")
-
 
     # Define query parameters
     params = {
@@ -191,10 +186,8 @@ def is_in_evacuation_zone(state: str,
                 #status = attributes.get("STATUS", '')
                 res_zones.add(zone)
 
-            print(f"Your location is in Evacuation Zone(s) {zone}.")
             return f"Your location is in Evacuation Zone(s) {zone}."
         else:
-            print("The location is not within an evacuation zone.")
             return "The location is not within an evacuation zone."
 
     print(f"Failed to retrieve data: {response.status_code}")
