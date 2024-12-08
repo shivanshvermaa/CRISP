@@ -2,12 +2,15 @@ import os
 import shutil
 import sqlite3
 
+import requests
 import pandas as pd
 import requests
 
 from langchain_core.tools import tool
 import us
 from typing import List,Dict,LiteralString
+
+from utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
 
 @tool
 def get_disaster_declaration(state: str,
@@ -62,8 +65,6 @@ def get_disaster_declaration(state: str,
         data = response.json()
         disaster_summaries = data.get("DisasterDeclarationsSummaries", [])
 
-
-
         # Format each disaster entry as a string
         formatted_disasters = []
         for disaster in disaster_summaries:
@@ -108,39 +109,34 @@ def is_in_evacuation_zone(state: str,
                           longitude: float) -> str:
     
     """
-    Determines if a given location is within an evacuation zone by querying the relevant state-specific API.
+    Determines if a given location is within an evacuation zone using state-specific APIs.
 
     Parameters:
     ----------
     state : str
-        The state code for which to check the evacuation zone (e.g., "FL" for Florida, "TX" for Texas).
+        State code (e.g., "FL" for Florida, "TX" for Texas).
     latitude : float
-        The latitude of the location to check.
+        Latitude of the location.
     longitude : float
-        The longitude of the location to check.
+        Longitude of the location.
 
     Returns:
+    --------
     str
-        A message indicating the evacuation zone(s) for the location, or an error message if the data could not be retrieved.
+        A message indicating the evacuation zone(s) or an error message if data retrieval fails.
 
     Notes:
-
-    - For Florida (FL)  function uses a point-based query (`esriGeometryPoint`) to check if the location
-      lies within any evacuation zone.
-    - For Texas (TX)  function approximates a point query by using a small bounding box (envelope) with
-      an intersect relationship (`esriGeometryEnvelope`) to determine if the location falls within any evacuation zone.
+    ------
+    - For Florida (FL): Uses a point-based query (`esriGeometryPoint`) to check evacuation zones.
+    - For Texas (TX): Uses a small bounding box (`esriGeometryEnvelope`) with an intersect relationship to approximate point queries.
 
     Example:
-    -------
+    --------
     >>> is_in_evacuation_zone("FL", 27.994402, -81.760254)
     'Your location is in Evacuation Zone(s) A.'
     """
 
-    # TODO: Reduce the returned answers to < 15K tokens and DocuString < 1024 characters.
-
-
     print(f"state:{state}||latitude:{latitude}||longitude:{longitude}")
-
 
     # Define query parameters
     params = {
@@ -154,10 +150,11 @@ def is_in_evacuation_zone(state: str,
     }
 
     # TODO Decode location
+    geometry_user_arcgis = (gmaps_to_arcgis(latitude, longitude))
     
     if state == "FL":
         base_url = "https://services.arcgis.com/3wFbqsFPLeKqOlIK/arcgis/rest/services/KYZ_ZL_Vector_Enriched_Calculated_20230608/FeatureServer/28/query"
-        params["geometry"] = f"{latitude},{longitude}"
+        params["geometry"] = f"{geometry_user_arcgis[0]},{geometry_user_arcgis[1]}"
         params["geometryType"] = "esriGeometryPoint"
         params["spatialRel"] = "esriSpatialRelWithin"
         
@@ -167,10 +164,10 @@ def is_in_evacuation_zone(state: str,
 
         offset = 10000  
 
-        xmin = latitude - offset
-        ymin = longitude - offset
-        xmax = latitude + offset
-        ymax = longitude + offset
+        xmin = geometry_user_arcgis[0] - offset
+        ymin = geometry_user_arcgis[1] - offset
+        xmax = geometry_user_arcgis[0] + offset
+        ymax = geometry_user_arcgis[1] + offset
 
         params["geometry"] = f"{xmin},{ymin},{xmax},{ymax}"
         params["geometryType"] = "esriGeometryEnvelope"
@@ -191,10 +188,8 @@ def is_in_evacuation_zone(state: str,
                 #status = attributes.get("STATUS", '')
                 res_zones.add(zone)
 
-            print(f"Your location is in Evacuation Zone(s) {zone}.")
             return f"Your location is in Evacuation Zone(s) {zone}."
         else:
-            print("The location is not within an evacuation zone.")
             return "The location is not within an evacuation zone."
 
     print(f"Failed to retrieve data: {response.status_code}")
@@ -249,6 +244,134 @@ def get_weather_alerts(state:str) -> Dict:
         except requests.exceptions.RequestException as e:
             return f"An error occurred: {e}"
     return "A state by this name doesn't exist in USA"
+
+@tool
+def find_nearest_shelter_texas(
+                    latitude: float,
+                    longitude: float,
+                    resCount: int = 3) -> str:
+    
+    """
+    Retrieves information about the nearest shelter based on a given location in Texas.
+
+    Parameters:
+    ----------
+    latitude : float
+        Latitude of the user's location.
+    longitude : float
+        Longitude of the user's location.
+
+    Returns:
+    --------
+    dict
+        Details of the nearest shelter, including name, address, and available services, or an error message if no shelters are found.
+
+    Example:
+    --------
+    >>> get_nearest_shelter(27.994402, -81.760254)
+    'Name: Central Shelter | 123 Main St, City, State'
+    """
+
+    # API Endpoint
+    base_url = "https://services5.arcgis.com/Rvw11bGpzJNE7apK/ArcGIS/rest/services/Warming_Centers_Public_View/FeatureServer/7/queryTopFeatures"
+    GOOGLE_MAPS_API_KEY = "AIzaSyCWRQIZv3ufAI9yJHaHlsXDsTCwNx3NRFw"  # Replace with your API key
+
+    geometry_user_arcgis = (gmaps_to_arcgis(latitude, longitude))
+
+    params = {
+        "where": "Status = 'Open'", 
+        "topFilter":f"""
+            {{
+                "groupByFields": "ShelterName",
+                "topCount": {resCount},
+                "orderByFields": "ShelterName"
+            }}
+        """,  
+        "geometry": f"{geometry_user_arcgis[0]},{geometry_user_arcgis[1]}",  
+        "geometryType": "esriGeometryPoint", 
+        "spatialRel": "esriSpatialRelIntersects",  
+        "distance": 50,  
+        "units": "esriSRUnit_StatuteMile",  
+        "outFields": "*",  
+        "returnGeometry": "true",  
+        "resultRecordCount": {resCount},  
+        "f": "json"
+    }
+
+    response = requests.get(base_url, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        if "features" in data:
+            distance_dict = {}
+            for feature in data["features"]:
+                attributes = feature['attributes']
+                geometry_feat_gmaps = arcgis_to_gmaps(feature['geometry']['x'], feature['geometry']['y'])
+                dist_dur = get_distance_google_maps(GOOGLE_MAPS_API_KEY, origin = f"{latitude},{longitude}", destination=f"{geometry_feat_gmaps[0]},{geometry_feat_gmaps[1]}")
+                if dist_dur:
+                    distance_dict[attributes['OBJECTID']] = dist_dur
+
+            distance_dict_sorted = dict(sorted(distance_dict.items(), key=lambda x: x[1][0]))
+
+            # Create the result list based on dist_dict's order
+            res = []
+            for obj_id in distance_dict_sorted.keys():
+                matching_feat = next((feat['attributes'] for feat in list(data["features"]) if feat['attributes']['OBJECTID'] == obj_id), None)
+                if matching_feat:
+                    address = " ".join([matching_feat[add] for add in ['Address', 'Address2', 'City', 'State', 'Zip'] if matching_feat[add]])
+                    """
+                    # table form
+                    fields = [
+                        matching_feat["ShelterName"],
+                        address,
+                        f"{distance_dict_sorted[obj_id][0]} miles",
+                        f"{distance_dict_sorted[obj_id][1]} min",
+                        matching_feat.get("Hours"),
+                        matching_feat.get("Phone"),
+                        matching_feat.get("Website"),
+                        matching_feat.get("POD_Status"),
+                        matching_feat.get("AllowsAnimals"),
+                        matching_feat.get("AnimalNotes"),
+                    ]
+
+                    # Filter out None values
+                    fields = [field for field in fields if field]
+
+                    # Combine fields into a compact string
+                    output = " | ".join(fields) """
+                    
+                    fields = [
+                        f"Name: {matching_feat['ShelterName']}",
+                        f"{address}",
+                        f"Distance: {distance_dict_sorted[obj_id][0]} miles - {distance_dict_sorted[obj_id][1]} min",
+                        f"{matching_feat.get('Hours').replace('day','')}" if matching_feat.get('Hours') else None,
+                        f"Contact: {matching_feat.get('Phone')}, {matching_feat.get('Website')}" 
+                        if matching_feat.get('Phone') and matching_feat.get('Website') 
+                        else f"Contact: {matching_feat.get('Phone')}" 
+                        if matching_feat.get('Phone') 
+                        else f"Website: {matching_feat.get('Website')}" 
+                        if matching_feat.get('Website') 
+                        else None,
+                        f"POD Status: {matching_feat.get('POD_Status')}" if matching_feat.get('POD_Status') else None,
+                        f"Animals: {matching_feat.get('AllowsAnimals')},{matching_feat.get('AnimalNotes')}" 
+                        if matching_feat.get('AllowsAnimals') and matching_feat.get('AnimalNotes') 
+                        else f"Animals: {matching_feat.get('AllowsAnimals')}" 
+                        if matching_feat.get('AllowsAnimals') 
+                        else f"Animals: {matching_feat.get('AnimalNotes')}" 
+                        if matching_feat.get('AnimalNotes')
+                        else None,
+                        f"Additional Info: {matching_feat.get('Additional_Info')}" if matching_feat.get('Additional_Info') else None,
+                    ]
+
+                    output = " | ".join([field for field in fields if field])
+                    res.append(output)
+            if res:
+                return "\n".join(res)
+    else:
+        f"Failed to retrieve data: {response.status_code}"
+
+    return "No open shelters found within 50 miles."
 
 # @tool
 # def weather_forecast(city:str,units:str)->Dict:
