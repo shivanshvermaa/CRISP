@@ -10,7 +10,17 @@ from langchain_core.tools import tool
 import us
 from typing import List,Dict,LiteralString
 
-from utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
+from agent.map_utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
+from googleplaces import GooglePlaces, types, lang 
+import requests 
+import json 
+import googlemaps
+
+from dotenv import load_dotenv
+load_dotenv("../.env")
+
+
+GOOGLE_MAPS_API_KEY=os.environ['GOOGLE_MAPS_API_KEY']
 
 @tool
 def get_disaster_declaration(state: str,
@@ -376,3 +386,126 @@ def find_nearest_shelter_texas(
 # @tool
 # def weather_forecast(city:str,units:str)->Dict:
 #     pass
+
+@tool
+def get_nearest_hospital(address:str):
+    """
+    This Function gets the 10 nearest hospitals for a given address. It expects a well formatted address with street name, city and state as well.
+    """
+
+    result = ""
+    
+    google_places = GooglePlaces(GOOGLE_MAPS_API_KEY)
+    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+    geocode_result = gmaps.geocode(address)
+
+
+    if geocode_result:
+
+        lat = geocode_result[0]['geometry']['location']['lat']
+        lng = geocode_result[0]['geometry']['location']['lng']
+
+        query_result = google_places.nearby_search(
+                # lat_lng ={'lat': 46.1667, 'lng': -1.15},
+                lat_lng ={'lat': lat, 'lng': lng},
+                radius = 5000,
+                # types =[types.TYPE_HOSPITAL] or
+                # [types.TYPE_CAFE] or [type.TYPE_BAR]
+                # or [type.TYPE_CASINO])
+                types =[types.TYPE_HOSPITAL])
+
+        # If any attributions related
+        # with search results print them
+        if query_result.has_attributions: 
+            print (query_result.html_attributions)
+
+        
+        # Iterate over the search results
+        for place in query_result.places[:5]:
+            
+            print(place)
+            # place.get_details()
+            print (place.name)
+
+            print (place.name)
+            place_geocoded = gmaps.reverse_geocode((place.geo_location['lat'], place.geo_location['lng']))
+            if place_geocoded:
+                result += f'Place Name : {place.name}\nAddress : {place_geocoded[0]["formatted_address"]}\n' #Latitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}
+                print("Address",place_geocoded[0]["formatted_address"])
+            else:
+                result += f'Place Name : {place.name}\nAddress : Unavailable\nLatitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}\n'
+                print("Address Unvailable")
+            print("Latitude", place.geo_location['lat'])
+            print("Longitude", place.geo_location['lng'])
+            print()
+
+        return result
+
+    else:
+        result = "Incomplete Address! Please provide a Complete Address"
+        print("Incomplete Address! Please provide a Complete Address")
+        return result
+    
+
+
+
+
+@tool
+def get_nearest_fire_station(address:str):
+    """
+    This Function gets the 10 nearest firestations for a given address. It expects a well formatted address with street name, city and state as well.
+    """
+
+    result = ""
+    
+    google_places = GooglePlaces(GOOGLE_MAPS_API_KEY)
+    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+    geocode_result = gmaps.geocode(address)
+
+
+    if geocode_result:
+
+        lat = geocode_result[0]['geometry']['location']['lat']
+        lng = geocode_result[0]['geometry']['location']['lng']
+
+        query_result = google_places.nearby_search(
+                # lat_lng ={'lat': 46.1667, 'lng': -1.15},
+                lat_lng ={'lat': lat, 'lng': lng},
+                radius = 5000,
+                # types =[types.TYPE_HOSPITAL] or
+                # [types.TYPE_CAFE] or [type.TYPE_BAR]
+                # or [type.TYPE_CASINO])
+                types =[types.TYPE_FIRE_STATION])
+
+        # If any attributions related
+        # with search results print them
+        if query_result.has_attributions: 
+            print (query_result.html_attributions)
+
+        
+        # Iterate over the search results
+        for place in query_result.places[:5]:
+            
+            print(place)
+            # place.get_details()
+            print (place.name)
+
+            print (place.name)
+            place_geocoded = gmaps.reverse_geocode((place.geo_location['lat'], place.geo_location['lng']))
+            if place_geocoded:
+                result += f'Place Name : {place.name}\nAddress : {place_geocoded[0]["formatted_address"]}\n' #Latitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}
+                print("Address",place_geocoded[0]["formatted_address"])
+            else:
+                result += f'Place Name : {place.name}\nAddress : Unavailable\nLatitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}\n'
+                print("Address Unvailable")
+            print("Latitude", place.geo_location['lat'])
+            print("Longitude", place.geo_location['lng'])
+            print()
+
+        return result
+
+    else:
+        result = "Incomplete Address! Please provide a Complete Address"
+        print("Incomplete Address! Please provide a Complete Address")
+        return result
+    
