@@ -8,7 +8,7 @@ import requests
 
 from langchain_core.tools import tool
 import us
-from typing import List,Dict,LiteralString
+from typing import List,Dict
 
 from agent.map_utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
 from googleplaces import GooglePlaces, types, lang 
@@ -206,6 +206,28 @@ def is_in_evacuation_zone(state: str,
     
     return f"Failed to retrieve data: {response.status_code}"
 
+def extract_alerts(data):
+    alerts = []
+    
+    for feature in data.get('features', []):
+        properties = feature.get('properties', {})
+        
+        alert = {
+            "Event": properties.get("event"),
+            "Affected Areas": properties.get("areaDesc"),
+            "Severity": properties.get("severity"),
+            "Certainty": properties.get("certainty"),
+            "Urgency": properties.get("urgency"),
+            "Start Time": properties.get("onset"),
+            "End Time": properties.get("ends"),
+            "Headline": properties.get("headline"),
+            "Description": properties.get("description"),
+            "Instructions": properties.get("instruction"),
+            "Source": properties.get("senderName")
+        }
+        alerts.append(alert)
+    
+    return alerts
 
 @tool
 def get_weather_alerts(state:str) -> Dict:
@@ -242,12 +264,24 @@ def get_weather_alerts(state:str) -> Dict:
             response.raise_for_status()  # Check for HTTP errors
             
             alerts_data = response.json()
-            
+
             # Check if there are any alerts
             if alerts_data.get("features"):
-                ## TODO extract only important keys Very Imp
-                print(alerts_data["features"][0])
-                return alerts_data["features"][:10]
+                alerts = extract_alerts(alerts_data)
+                for alert in alerts:
+                    print(f"Event: {alert['Event']}")
+                    print(f"Affected Areas: {alert['Affected Areas']}")
+                    print(f"Severity: {alert['Severity']}")
+                    print(f"Certainty: {alert['Certainty']}")
+                    print(f"Urgency: {alert['Urgency']}")
+                    print(f"Start Time: {alert['Start Time']}")
+                    print(f"End Time: {alert['End Time']}")
+                    print(f"Headline: {alert['Headline']}")
+                    print(f"Description: {alert['Description']}")
+                    print(f"Instructions: {alert['Instructions']}")
+                    print(f"Source: {alert['Source']}")
+                    print("\n")
+                    return f"Above are the current alerts for {state.abbr.upper()}. "
             else:
                 return f"No active alerts for {state.abbr.upper()}."
 
@@ -383,6 +417,29 @@ def find_nearest_shelter_texas(
 
     return "No open shelters found within 50 miles."
 
+@tool
+def get_power_outage_map(state:str):
+    """
+    Returns a link containing the power outage map for Florida
+    It queries the argis api to get the outage map
+
+    Parameters:
+    -----------------
+    state: str
+          state for which we want to check power outage
+
+    Return:
+    -------------------
+    link: str
+          hyperlink containing the outage map
+
+    Example:
+    >>> power_outage('Florida')
+    "https://www.arcgis.com/apps/dashboards/4833aec638214268b09683ce78ed2edf"
+    """
+    if state in ['Florida' , 'FL']:
+        return "https://www.arcgis.com/apps/dashboards/4833aec638214268b09683ce78ed2edf"
+
 # @tool
 # def weather_forecast(city:str,units:str)->Dict:
 #     pass
@@ -446,9 +503,6 @@ def get_nearest_hospital(address:str):
         print("Incomplete Address! Please provide a Complete Address")
         return result
     
-
-
-
 
 @tool
 def get_nearest_fire_station(address:str):
