@@ -476,16 +476,8 @@ def query_rag_system(message: str , index:str) -> dict:
 
         if response.status_code == 200:
             result = response.json()
-            return {
-                "response": result.get("response"),
-                "sources": result.get("sources"),
-                "token_counts": {
-                    "total_embedding": result.get("total_embedding_token_count"),
-                    "prompt_llm": result.get("prompt_llm_token_count"),
-                    "completion_llm": result.get("completion_llm_token_count"),
-                },
-                "rag_chunk_details": result.get("rag_chunk_details"),
-            }
+            answer = str(result.get("response"))
+            return answer
         else:
             return {"error": f"Server returned status {response.status_code}: {response.text}"}
     except requests.RequestException as e:
