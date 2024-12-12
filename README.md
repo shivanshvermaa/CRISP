@@ -40,13 +40,6 @@ Use the following command to start the PostgreSQL server:
 pg_ctl start
 ```
 
-### 5. Create a Database
-
-Create a new database for your project:
-
-```bash
-createdb <database_name>
-```
 
 ### 6. Start the Python Server
 
