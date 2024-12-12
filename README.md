@@ -40,13 +40,6 @@ Use the following command to start the PostgreSQL server:
 pg_ctl start
 ```
 
-### 5. Create a Database
-
-Create a new database for your project:
-
-```bash
-createdb <database_name>
-```
 
 ### 6. Start the Python Server
 
@@ -79,8 +72,8 @@ if __name__ == "__main__":
     }
 
     # Configuration for the local folder and database
-    local_folder_path = "path"
-    index_table_name = "test"
+    local_folder_path = os.getcwd() + "/data/HurricaneFirstAid/" #path of folder with files to index
+    index_table_name = "hurricanefirstaid"
     
     # Chunk size and overlap settings
     chunk_size = 256  # Number of tokens or characters per chunk

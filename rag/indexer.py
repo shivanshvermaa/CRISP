@@ -165,7 +165,7 @@ def run_indexer(local_folder_path, index_table_name, chunk_size, chunk_overlap):
     # Load new documents from the local folder
     documents = load_files_from_folder(local_folder_path, chunk_size, chunk_overlap)
     if not documents:
-        logger.info("No documents found to index.")
+        logger.error(f"No documents found to index in path {local_folder_path}")
         return
 
     # Extract metadata and compare
