@@ -32,7 +32,7 @@ def main():
     tools = [get_disaster_declaration,
              is_in_evacuation_zone,
              get_weather_alerts,
-             get_power_outage_map]
+             get_power_outage_map,
              get_nearest_hospital,
              get_nearest_fire_station]
 
