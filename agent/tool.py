@@ -8,7 +8,8 @@ import requests
 
 from langchain_core.tools import tool
 import us
-from typing import List,Dict,Literal
+
+from typing import List,Dict
 
 from agent.map_utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
 from googleplaces import GooglePlaces, types, lang 
@@ -209,6 +210,28 @@ def is_in_evacuation_zone(state: str,
     
     return f"Failed to retrieve data: {response.status_code}"
 
+def extract_alerts(data):
+    alerts = []
+    
+    for feature in data.get('features', []):
+        properties = feature.get('properties', {})
+        
+        alert = {
+            "Event": properties.get("event"),
+            "Affected Areas": properties.get("areaDesc"),
+            "Severity": properties.get("severity"),
+            "Certainty": properties.get("certainty"),
+            "Urgency": properties.get("urgency"),
+            "Start Time": properties.get("onset"),
+            "End Time": properties.get("ends"),
+            "Headline": properties.get("headline"),
+            "Description": properties.get("description"),
+            "Instructions": properties.get("instruction"),
+            "Source": properties.get("senderName")
+        }
+        alerts.append(alert)
+    
+    return alerts
 @tool
 def get_weather_alerts(state:str) -> Dict:
     """
@@ -244,12 +267,24 @@ def get_weather_alerts(state:str) -> Dict:
             response.raise_for_status()  # Check for HTTP errors
             
             alerts_data = response.json()
-            
+
             # Check if there are any alerts
             if alerts_data.get("features"):
-                ## TODO extract only important keys Very Imp
-                print(alerts_data["features"][0])
-                return alerts_data["features"][:10]
+                alerts = extract_alerts(alerts_data)
+                # for alert in alerts:
+                #     print(f"Event: {alert['Event']}")
+                #     print(f"Affected Areas: {alert['Affected Areas']}")
+                #     print(f"Severity: {alert['Severity']}")
+                #     print(f"Certainty: {alert['Certainty']}")
+                #     print(f"Urgency: {alert['Urgency']}")
+                #     print(f"Start Time: {alert['Start Time']}")
+                #     print(f"End Time: {alert['End Time']}")
+                #     print(f"Headline: {alert['Headline']}")
+                #     print(f"Description: {alert['Description']}")
+                #     print(f"Instructions: {alert['Instructions']}")
+                #     print(f"Source: {alert['Source']}")
+                #     print("\n")
+                return f"Above are the current {alerts} for {state.abbr.upper()}. "
             else:
                 return f"No active alerts for {state.abbr.upper()}."
 
@@ -368,126 +403,68 @@ def get_nearest_shelter(address: str,
 
     return "No open shelters found within 50 miles."
 
+@tool
+def get_power_outage_map(state:str):
+    """
+    Returns a link containing the power outage map for Florida
+    It queries the argis api to get the outage map
+
+    Parameters:
+    -----------------
+    state: str
+          state for which we want to check power outage
+
+    Return:
+    -------------------
+    link: str
+          hyperlink containing the outage map
+
+    Example:
+    >>> power_outage('Florida')
+    "https://www.arcgis.com/apps/dashboards/4833aec638214268b09683ce78ed2edf"
+    """
+    if state in ['Florida' , 'FL']:
+        return "https://www.arcgis.com/apps/dashboards/4833aec638214268b09683ce78ed2edf"
+
 # @tool
 # def weather_forecast(city:str,units:str)->Dict:
 #     pass
 
 @tool
-def get_nearest_hospital(address:str):
+def query_rag_system(message: str , index:str) -> dict:
     """
-    This Function gets the 10 nearest hospitals for a given address. It expects a well formatted address with street name, city and state as well.
+    Query the retrieval augmented generation (RAG) system and answer the users question based on information stored in table (index).
+
+    Parameters:
+    message (str): Question asked by user. 
+                
+    index (str): The name of the index based on the user message and given details. 
+                Example: 'HurricaneFirstAid' for first aid related message. 
+                 
+    Returns:
+    - answer: A string containing the RAG response.
     """
-
-    result = ""
-    
-    google_places = GooglePlaces(GOOGLE_MAPS_API_KEY)
-    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
-    geocode_result = gmaps.geocode(address)
+    # Define the URL of your RAG Flask server
+    url = "http://localhost:5015/ask"
+    headers = {"Content-Type": "application/json"}
 
 
-    if geocode_result:
+    query_data = {
+        "q": message,
+        "index": index,
+        "prompt": "",
+        "top_k": 5,
+        "conversation_history": "",
+    }
 
-        lat = geocode_result[0]['geometry']['location']['lat']
-        lng = geocode_result[0]['geometry']['location']['lng']
+    try:
+        response = requests.post(url, json=query_data, headers=headers)
 
-        query_result = google_places.nearby_search(
-                # lat_lng ={'lat': 46.1667, 'lng': -1.15},
-                lat_lng ={'lat': lat, 'lng': lng},
-                radius = 5000,
-                # types =[types.TYPE_HOSPITAL] or
-                # [types.TYPE_CAFE] or [type.TYPE_BAR]
-                # or [type.TYPE_CASINO])
-                types =[types.TYPE_HOSPITAL])
-
-        # If any attributions related
-        # with search results print them
-        if query_result.has_attributions: 
-            print (query_result.html_attributions)
-
-        
-        # Iterate over the search results
-        for place in query_result.places[:5]:
-            
-            print(place)
-            # place.get_details()
-            print (place.name)
-
-            print (place.name)
-            place_geocoded = gmaps.reverse_geocode((place.geo_location['lat'], place.geo_location['lng']))
-            if place_geocoded:
-                result += f'Place Name : {place.name}\nAddress : {place_geocoded[0]["formatted_address"]}\n' #Latitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}
-                print("Address",place_geocoded[0]["formatted_address"])
-            else:
-                result += f'Place Name : {place.name}\nAddress : Unavailable\nLatitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}\n'
-                print("Address Unvailable")
-            print("Latitude", place.geo_location['lat'])
-            print("Longitude", place.geo_location['lng'])
-            print()
-
-        return result
-
-    else:
-        result = "Incomplete Address! Please provide a Complete Address"
-        print("Incomplete Address! Please provide a Complete Address")
-        return result
-    
-
-@tool
-def get_nearest_fire_station(address:str):
-    """
-    This Function gets the 10 nearest firestations for a given address. It expects a well formatted address with street name, city and state as well.
-    """
-
-    result = ""
-    
-    google_places = GooglePlaces(GOOGLE_MAPS_API_KEY)
-    gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
-    geocode_result = gmaps.geocode(address)
-
-
-    if geocode_result:
-
-        lat = geocode_result[0]['geometry']['location']['lat']
-        lng = geocode_result[0]['geometry']['location']['lng']
-
-        query_result = google_places.nearby_search(
-                # lat_lng ={'lat': 46.1667, 'lng': -1.15},
-                lat_lng ={'lat': lat, 'lng': lng},
-                radius = 5000,
-                # types =[types.TYPE_HOSPITAL] or
-                # [types.TYPE_CAFE] or [type.TYPE_BAR]
-                # or [type.TYPE_CASINO])
-                types =[types.TYPE_FIRE_STATION])
-
-        # If any attributions related
-        # with search results print them
-        if query_result.has_attributions: 
-            print (query_result.html_attributions)
-
-        
-        # Iterate over the search results
-        for place in query_result.places[:5]:
-            
-            print(place)
-            # place.get_details()
-            print (place.name)
-
-            print (place.name)
-            place_geocoded = gmaps.reverse_geocode((place.geo_location['lat'], place.geo_location['lng']))
-            if place_geocoded:
-                result += f'Place Name : {place.name}\nAddress : {place_geocoded[0]["formatted_address"]}\n' #Latitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}
-                print("Address",place_geocoded[0]["formatted_address"])
-            else:
-                result += f'Place Name : {place.name}\nAddress : Unavailable\nLatitude : {place.geo_location["lat"]}\nLongitude : {place.geo_location["lng"]}\n'
-                print("Address Unvailable")
-            print("Latitude", place.geo_location['lat'])
-            print("Longitude", place.geo_location['lng'])
-            print()
-
-        return result
-
-    else:
-        result = "Incomplete Address! Please provide a Complete Address"
-        print("Incomplete Address! Please provide a Complete Address")
-        return result
-    
+        if response.status_code == 200:
+            result = response.json()
+            answer = str(result.get("response"))
+            return answer
+        else:
+            return str(f"Server returned status {response.status_code}: {response.text}")
+    except requests.RequestException as e:
+        return str(f"Request failed: {str(e)}")

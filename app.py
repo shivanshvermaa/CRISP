@@ -9,7 +9,8 @@ from langchain_community.llms import OpenAI
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 
-from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_nearest_hospital,get_nearest_fire_station,get_nearest_shelter
+from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map,get_nearest_hospital,get_nearest_fire_station, get_nearest_shelter
+
 from agent.graph import create_graph
 
 import dotenv
@@ -33,6 +34,7 @@ def main():
     tools = [get_disaster_declaration,
              is_in_evacuation_zone,
              get_weather_alerts,
+             get_power_outage_map,
              get_nearest_hospital,
              get_nearest_fire_station,
              get_nearest_shelter]
