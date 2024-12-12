@@ -456,7 +456,7 @@ def query_rag_system(message: str , index:str) -> dict:
                 Example: 'HurricaneFirstAid' for first aid related message. 
                  
     Returns:
-    - dict: A dictionary containing the RAG response and related metadata.
+    - answer: A string containing the RAG response.
     """
     # Define the URL of your RAG Flask server
     url = "http://localhost:5015/ask"
@@ -479,6 +479,6 @@ def query_rag_system(message: str , index:str) -> dict:
             answer = str(result.get("response"))
             return answer
         else:
-            return {"error": f"Server returned status {response.status_code}: {response.text}"}
+            return str(f"Server returned status {response.status_code}: {response.text}")
     except requests.RequestException as e:
-        return {"error": f"Request failed: {str(e)}"}
+        return str(f"Request failed: {str(e)}")
