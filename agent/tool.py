@@ -484,6 +484,9 @@ def get_nearest_hospital(address:str):
     geocode_result = gmaps.geocode(address)
 
 
+    print(geocode_result)
+
+
     if geocode_result:
 
         lat = geocode_result[0]['geometry']['location']['lat']

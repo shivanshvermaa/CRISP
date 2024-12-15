@@ -4,7 +4,7 @@ import os
 import yaml
 import uuid
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage,SystemMessage
+from langchain_core.messages import HumanMessage,AIMessage
 from langchain_community.llms import OpenAI
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
@@ -85,5 +85,5 @@ async def main(message):
     response = graph.invoke({"messages":chat_history},
                             config=config)
     graph_response = response["messages"][-1].content
-    chat_history.append(SystemMessage(content=graph_response))
+    chat_history.append(AIMessage(content=graph_response))
     await cl.Message(graph_response).send()
