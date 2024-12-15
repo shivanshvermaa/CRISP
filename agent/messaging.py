@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv("../.env")
 
 from flask import Flask, request
-from tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map, get_nearest_shelter
+from tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map, get_nearest_shelter,get_nearest_hospital,get_nearest_fire_stations
 from graph import create_graph
 
 app = Flask(__name__)
@@ -33,8 +33,8 @@ tools = [
     is_in_evacuation_zone,
     get_weather_alerts,
     get_power_outage_map,
-    # get_nearest_hospital,
-    # get_nearest_fire_station,
+    get_nearest_hospital,
+    get_nearest_fire_station,
     get_nearest_shelter,
 ]
 
@@ -97,5 +97,4 @@ def receive_whatsapp():
 
 
 if __name__ == "__main__":
-    if __name__ == "__main__":
-        app.run(debug=True, host="0.0.0.0", port=3000)
+    app.run(debug=True, host="0.0.0.0", port=3000)
