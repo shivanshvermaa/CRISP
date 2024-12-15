@@ -11,7 +11,7 @@ import us
 
 from typing import List,Dict
 
-from agent.map_utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
+from map_utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
 from googleplaces import GooglePlaces, types, lang 
 import requests 
 import json 
@@ -271,19 +271,19 @@ def get_weather_alerts(state:str) -> Dict:
             # Check if there are any alerts
             if alerts_data.get("features"):
                 alerts = extract_alerts(alerts_data)
-                # for alert in alerts:
-                #     print(f"Event: {alert['Event']}")
-                #     print(f"Affected Areas: {alert['Affected Areas']}")
-                #     print(f"Severity: {alert['Severity']}")
-                #     print(f"Certainty: {alert['Certainty']}")
-                #     print(f"Urgency: {alert['Urgency']}")
-                #     print(f"Start Time: {alert['Start Time']}")
-                #     print(f"End Time: {alert['End Time']}")
-                #     print(f"Headline: {alert['Headline']}")
-                #     print(f"Description: {alert['Description']}")
-                #     print(f"Instructions: {alert['Instructions']}")
-                #     print(f"Source: {alert['Source']}")
-                #     print("\n")
+                for alert in alerts:
+                    print(f"Event: {alert['Event']}")
+                    print(f"Affected Areas: {alert['Affected Areas']}")
+                    print(f"Severity: {alert['Severity']}")
+                    print(f"Certainty: {alert['Certainty']}")
+                    print(f"Urgency: {alert['Urgency']}")
+                    print(f"Start Time: {alert['Start Time']}")
+                    print(f"End Time: {alert['End Time']}")
+                    print(f"Headline: {alert['Headline']}")
+                    print(f"Description: {alert['Description']}")
+                    print(f"Instructions: {alert['Instructions']}")
+                    print(f"Source: {alert['Source']}")
+                    print("\n")
                 return f"Above are the current {alerts} for {state.abbr.upper()}. "
             else:
                 return f"No active alerts for {state.abbr.upper()}."
