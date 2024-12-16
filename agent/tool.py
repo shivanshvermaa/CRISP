@@ -115,16 +115,13 @@ def get_disaster_declaration(state: str,
 
 
 @tool
-def is_in_evacuation_zone(state: str,
-                          address: str) -> str:
+def is_in_evacuation_zone(address: str) -> str:
     
     """
     Determines if a given location is within an evacuation zone using state-specific APIs.
 
     Parameters:
     ----------
-    state : str
-        State code (e.g., "FL" for Florida, "TX" for Texas).
     adsress : str
         Address of the location
 
@@ -140,7 +137,7 @@ def is_in_evacuation_zone(state: str,
 
     Example:
     --------
-    >>> is_in_evacuation_zone("FL", 27.994402, -81.760254)
+    >>> is_in_evacuation_zone('123 Main St FL 12345')
     'Your location is in Evacuation Zone(s) A.'
     """
 
@@ -163,6 +160,14 @@ def is_in_evacuation_zone(state: str,
 
         latitude = geocode_result[0]['geometry']['location']['lat']
         longitude = geocode_result[0]['geometry']['location']['lng']
+
+        place_geocoded = gmaps.reverse_geocode((latitude, longitude))
+
+        for comp in place_geocoded[0]['address_components']:
+            if 'administrative_area_level_1' in comp['types']:
+                break
+
+        state = comp['short_name']
 
         geometry_user_arcgis = (gmaps_to_arcgis(latitude, longitude))
         
