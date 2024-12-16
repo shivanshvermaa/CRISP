@@ -1,63 +1,216 @@
-# Title Here
+# Vector-Based Retrieval System with PostgreSQL and pgvector
 
+A comprehensive system for vector-based data ingestion and retrieval using PostgreSQL and the pgvector extension, integrated with a Python server for efficient data handling and querying.
+
+---
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation and Setup](#installation-and-setup)
+  - [1. Install Homebrew (macOS)](#1-install-homebrew-macos)
+  - [2. Install PostgreSQL 14 via Homebrew](#2-install-postgresql-14-via-homebrew)
+  - [3. Initialize the Homebrew Environment](#3-initialize-the-homebrew-environment)
+  - [4. Start PostgreSQL via Homebrew Services](#4-start-postgresql-via-homebrew-services)
+  - [5. Stop Existing Postgres Services (If Needed)](#5-stop-existing-postgres-services-if-needed)
+  - [6. (Re)Initialize the PostgreSQL Data Directory](#6-reinitialize-the-postgresql-data-directory)
+  - [7. Start PostgreSQL Server Manually (If Not Using Homebrew Services)](#7-start-postgresql-server-manually-if-not-using-homebrew-services)
+  - [8. Verify the PostgreSQL Server is Running](#8-verify-the-postgresql-server-is-running)
+  - [9. Create PostgreSQL Role and Database](#9-create-postgresql-role-and-database)
+  - [10. Install pgvector Extension](#10-install-pgvector-extension)
+- [Vector-Based Retrieval System Installation](#vector-based-retrieval-system-installation)
+  - [1. Start the Python Server](#1-start-the-python-server)
+  - [2. Ingestion and Retrieval](#2-ingestion-and-retrieval)
+    - [Ingestion Code](#ingestion-code)
+    - [Retrieval Code](#retrieval-code)
+- [Troubleshooting](#troubleshooting)
+  - [1. Permission Errors During initdb](#1-permission-errors-during-initdb)
+  - [2. Cannot Run initdb as root](#2-cannot-run-initdb-as-root)
+  - [3. Directory Already Exists](#3-directory-already-exists)
+  - [4. Postgres Service Conflicts](#4-postgres-service-conflicts)
+  - [5. Check Server Status and Logs](#5-check-server-status-and-logs)
+- [TODO](#todo)
+- [Notes](#notes)
+- [References](#references)
+
+---
 
 ## Prerequisites
 
-- PostgreSQL 13+ installed
-- `pgvector` extension installed
-- Python 3.x installed
+- **Homebrew** (for macOS users)
+- **PostgreSQL 14** installed
+- **pgvector** extension installed
+- **Python 3.x** installed
 
-## Installation steps for Vector-Based Retrieval System with PostgreSQL and pgvector
+---
 
-### 1. Install PostgreSQL
+## Installation and Setup
 
-Make sure PostgreSQL version 13 or higher is installed on your system.
+### 1. Install Homebrew (macOS)
 
-### 2. Install `pgvector`
+If you are on macOS and do not have Homebrew installed, install it using the following command:
 
-Follow the installation steps from the [pgvector GitHub repository](https://github.com/pgvector/pgvector). On Linux, ensure PostgreSQL is installed before proceeding.
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
-### 3. Create PostgreSQL Database and Enable Vector Extension
+### 2. Install PostgreSQL 14 via Homebrew
 
-Connect to your PostgreSQL server using the `psql` command:
+Install PostgreSQL version 14 using Homebrew:
+```bash
+
+brew install postgresql@14
+```
+
+### 3. Initialize the Homebrew Environment
+
+Add Homebrew to your shell environment by executing the following commands:
+
+```bash
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
+
+### 4. Start PostgreSQL via Homebrew Services
+
+Start PostgreSQL using Homebrew services:
+
+```bash
+brew services start postgresql@14
+```
+
+Verify that PostgreSQL is running:
+
+```bash
+brew services list
+```
+
+Ensure that postgresql@14 shows as “started” or similar.
+
+### 5. Stop Existing Postgres Services (If Needed)
+
+If you need to stop and manage Postgres manually, use:
+
+```bash
+brew services stop postgresql@14
+```
+
+### 6. (Re)Initialize the PostgreSQL Data Directory
+
+If you need to start fresh and the data directory already exists, remove it first:
+
+```bash
+sudo rm -rf /usr/local/var/postgres
+
+```
+Then recreate the directory and set correct permissions:
+
+```bash
+sudo mkdir -p /usr/local/var/postgres
+sudo chown -R $(whoami) /usr/local/var/postgres
+chmod 700 /usr/local/var/postgres
+
+```
+Initialize the database:
+
+```bash
+initdb -D /usr/local/var/postgres
+
+```
+This should complete without permission errors.
+
+### 7. Start PostgreSQL Server Manually (If Not Using Homebrew Services)
+
+Start PostgreSQL manually:
+
+```bash
+pg_ctl -D /usr/local/var/postgres start
+
+```
+Alternatively, if you prefer using Homebrew services:
+
+```bash
+brew services start postgresql@14
+
+```
+### 8. Verify the PostgreSQL Server is Running
+
+Check the status of the PostgreSQL server:
+
+```bash
+pg_ctl -D /usr/local/var/postgres status
+
+```
+Or simply try connecting:
+
+```bash
+psql postgres
+
+```
+If you connect successfully, the server is running.
+
+### 9. Create PostgreSQL Role and Database
+
+Once connected to psql (using psql postgres), create a PostgreSQL role with password and superuser privileges:
+
+```bash
+CREATE ROLE postgres WITH SUPERUSER CREATEDB CREATEROLE LOGIN PASSWORD '<password>';
+
+```
+Replace <password> with your desired password.
+
+Then, create the vectordb database:
+
+```bash
+CREATE DATABASE vectordb;
+
+```
+### 10. Install pgvector Extension
+
+Clone, build, and install the pgvector extension:
+
+```bash
+cd /tmp
+git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git
+cd pgvector
+make
+sudo make install
+
+```
+After installing, connect to your vectordb database:
 
 ```bash
 psql --host localhost --username postgres --dbname vectordb
+
 ```
-
-Run the following commands in the PostgreSQL shell:
-
-```sql
-CREATE ROLE postgres WITH SUPERUSER CREATEDB CREATEROLE LOGIN PASSWORD '<password>';
-CREATE EXTENSION IF NOT EXISTS vector;
-```
-
-### 4. Start PostgreSQL Server
-
-Use the following command to start the PostgreSQL server:
+Enable the vector extension:
 
 ```bash
-pg_ctl start
+CREATE EXTENSION IF NOT EXISTS vector;
+
 ```
+This should successfully load pgvector into vectordb.
 
+Vector-Based Retrieval System Installation
 
-### 6. Start the Python Server
+#### 1. Start the Python Server
 
 Run the retrieval server with the following command:
 
 ```bash
 python retriever.py runserver
+
 ```
+	Note: This command currently starts retriever.py. There is a TODO to combine it with app.py.
 
-> **Note:** This command currently starts `retriever.py`. There is a TODO to combine it with `app.py`.
+#### 2. Ingestion and Retrieval
 
-## Ingestion and Retrieval
+Below are sample code snippets for ingestion and retrieval queries. 
+#### NOTE: nake sure documents are present in folder  -- os.getcwd() + "/data/<foldername>/" . Modify the table name as required.  In the below code , folder is os.getcwd() + "/data/HurricaneFirstAid/" and the table name selected is hurricanefirstaid. 
+ 
+Ingestion Code
 
-Below is a sample code snippet for ingestion and retrieval queries.
-
-### Ingestion Code
-
-```python
+```bash
 import os
 import requests
 
@@ -72,7 +225,7 @@ if __name__ == "__main__":
     }
 
     # Configuration for the local folder and database
-    local_folder_path = os.getcwd() + "/data/HurricaneFirstAid/" #path of folder with files to index
+    local_folder_path = os.getcwd() + "/data/HurricaneFirstAid/"  # Path of folder with files to index
     index_table_name = "hurricanefirstaid"
     
     # Chunk size and overlap settings
@@ -102,11 +255,11 @@ if __name__ == "__main__":
             print("Error Response:", response.json())
     except Exception as e:
         print(f"An error occurred while making the request: {e}")
+
 ```
+Retrieval Code
 
-### Retrieval Code
-
-```python
+```bash
 import requests
 
 # Define the URL of your Flask server
@@ -142,22 +295,62 @@ if response.status_code == 200:
     print("RAG Chunk Details:", result['rag_chunk_details'])
 else:
     print("Error:", response.status_code, response.text)
+
 ```
+### Troubleshooting
 
-## TODO
+### 1. Permission Errors During initdb
 
-- [ ] Combine `retriever.py` with `app.py` for unified server execution.
+If you encounter an error like could not change permissions of directory ...: Operation not permitted, ensure the directory /usr/local/var/postgres is owned by your user and has correct permissions:
 
+```bash
+sudo chown -R $(whoami) /usr/local/var/postgres
+chmod 700 /usr/local/var/postgres
 
-## Notes
+```
+Then run:
 
-- Ensure the PostgreSQL server is running before starting the Python server.
-- Configure the database settings in the ingestion code as per your environment.
+```bash
+initdb -D /usr/local/var/postgres
 
-## References
+```
+### 2. Cannot Run initdb as root
 
-- [pgvector GitHub Repository](https://github.com/pgvector/pgvector)
+If you run initdb with sudo or as root, it will fail. Run initdb as the non-root user who will own the server process.
 
----
+### 3. Directory Already Exists
+
+If initdb complains the directory is not empty, remove it if you want a fresh start:
+
+```bash
+sudo rm -rf /usr/local/var/postgres
+
+```
+Then recreate, adjust permissions, and re-run initdb.
+
+### 4. Postgres Service Conflicts
+
+If you have multiple versions of PostgreSQL running (e.g., different ports), ensure only one instance is running on port 5432, or adjust postgresql.conf to use a different port. Use the following command to identify processes occupying port 5432:
+
+```bash
+lsof -i :5432
+
+```
+Then stop or kill the conflicting processes as needed.
+
+### 5. Check Server Status and Logs
+
+If pg_ctl indicates a failure, check the log file you passed with -l logfile or inspect /usr/local/var/postgres/server.log if it exists. This may provide clues on what’s wrong.
+
+Notes
+
+	•	Ensure the PostgreSQL server is running before starting the Python server.
+	•	Configure the database settings in the ingestion code as per your environment.
+
+References
+
+	•	
 
 Feel free to update this README as your project evolves!
+
+---
