@@ -32,7 +32,8 @@ CREATE ROLE postgres WITH SUPERUSER CREATEDB CREATEROLE LOGIN PASSWORD '<passwor
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-### 4. Start PostgreSQL Server
+### 4. brew services list
+
 
 Use the following command to start the PostgreSQL server:
 
