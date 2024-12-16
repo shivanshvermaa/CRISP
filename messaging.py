@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import Flask, request
-from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map, get_nearest_shelter,get_nearest_hospital,get_nearest_fire_station
+from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map, get_nearest_shelter,get_nearest_hospital,get_nearest_fire_station,query_rag_system
 from agent.graph import create_graph
 
 app = Flask(__name__)
@@ -36,6 +36,7 @@ tools = [
     get_nearest_hospital,
     get_nearest_fire_station,
     get_nearest_shelter,
+    query_rag_system
 ]
 
 primary_assistant_prompt = ChatPromptTemplate.from_messages(

@@ -451,7 +451,8 @@ def query_rag_system(message: str , index:str) -> dict:
     url = "http://localhost:5015/ask"
     headers = {"Content-Type": "application/json"}
 
-
+    print(f"QUERY:{message}")
+    index = "HurricaneFirstAid"
     query_data = {
         "q": message,
         "index": index,
