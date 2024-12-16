@@ -7,11 +7,11 @@ from langchain_community.llms import OpenAI
 from langchain_openai.chat_models import ChatOpenAI
 from twilio.rest import Client
 from dotenv import load_dotenv
-load_dotenv("../.env")
+load_dotenv()
 
 from flask import Flask, request
-from tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map, get_nearest_shelter,get_nearest_hospital,get_nearest_fire_stations
-from graph import create_graph
+from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map, get_nearest_shelter,get_nearest_hospital,get_nearest_fire_station
+from agent.graph import create_graph
 
 app = Flask(__name__)
 account_sid = os.environ['ACCOUNT_SID']

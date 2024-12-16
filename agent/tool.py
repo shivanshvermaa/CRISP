@@ -11,7 +11,7 @@ import us
 
 from typing import List,Dict
 
-from map_utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
+from agent.map_utils import arcgis_to_gmaps, gmaps_to_arcgis, get_distance_google_maps
 from googleplaces import GooglePlaces, types, lang 
 import requests 
 import json 
@@ -433,6 +433,7 @@ def get_power_outage_map(state:str):
 @tool
 def query_rag_system(message: str , index:str) -> dict:
     """
+    Returns evacuation plans for Hurricane struck region
     Query the retrieval augmented generation (RAG) system and answer the users question based on information stored in table (index).
 
     Parameters:
@@ -443,6 +444,8 @@ def query_rag_system(message: str , index:str) -> dict:
                  
     Returns:
     - answer: A string containing the RAG response.
+    Example: >>
+    query_rag_system(message="what should I use as firstaid during a hurricane",index='HurricaneFirstAid')
     """
     # Define the URL of your RAG Flask server
     url = "http://localhost:5015/ask"
@@ -456,7 +459,7 @@ def query_rag_system(message: str , index:str) -> dict:
         "top_k": 5,
         "conversation_history": "",
     }
-
+    print('Quering rag........')
     try:
         response = requests.post(url, json=query_data, headers=headers)
 
