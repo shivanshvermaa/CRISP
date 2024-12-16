@@ -6,7 +6,7 @@ headers = {"Content-Type": "application/json"}
 
 # Prepare the request data
 query_data = {
-    "q": "what should be my plan to evacuate?",
+    "q": "what should be my plan to evacuate in case of a Hurricane",
     "index": "hurricanefirstaid",
     "prompt": "",
     "top_k": 5,

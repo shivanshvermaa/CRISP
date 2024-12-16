@@ -4,12 +4,13 @@ import os
 import yaml
 import uuid
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage,SystemMessage
+from langchain_core.messages import HumanMessage,AIMessage
 from langchain_community.llms import OpenAI
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
-from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map
-#from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map,get_nearest_hospital,get_nearest_fire_station
+
+from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map,get_nearest_hospital,get_nearest_fire_station, get_nearest_shelter,query_rag_system
+
 from agent.graph import create_graph
 
 import dotenv
@@ -35,7 +36,9 @@ def main():
              get_weather_alerts,
              get_power_outage_map,
              get_nearest_hospital,
-             get_nearest_fire_station]
+             get_nearest_fire_station,
+             get_nearest_shelter,
+             query_rag_system]
 
     # TODO Improve this zx
     primary_assistant_prompt = ChatPromptTemplate.from_messages(
@@ -83,5 +86,5 @@ async def main(message):
     response = graph.invoke({"messages":chat_history},
                             config=config)
     graph_response = response["messages"][-1].content
-    chat_history.append(SystemMessage(content=graph_response))
+    chat_history.append(AIMessage(content=graph_response))
     await cl.Message(graph_response).send()
