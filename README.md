@@ -1,10 +1,36 @@
-# Vector-Based Retrieval System with PostgreSQL and pgvector
 
-A comprehensive system for vector-based data ingestion and retrieval using PostgreSQL and the pgvector extension, integrated with a Python server for efficient data handling and querying.
+# CRISP - Crisis Response and Intelligent Support Platform
 
----
+## Problem Statement
+	•	Hurricanes bring chaos: severe weather, evacuation needs, and infrastructure disruptions.
+	•	Lack of centralized, real-time information makes decision-making difficult.
+	•	Limited network connectivity during disasters restricts access to digital resources.
+	•	Emergency services struggle with overwhelming demand and coordination challenges.
+	•	Florida and Texas face these challenges repeatedly, requiring smarter disaster management solutions.
+	•	Historical storms like Katrina and Harvey have shown the need for better real-time disaster response tools.
 
-## Table of Contents
+## Solution
+	•	An AI-driven agent, CRISP provides real-time hurricane support for Florida and Texas.
+	•	Accessible via WhatsApp Message, ensuring usability during low connectivity.
+	•	A suite of tools for timely and actionable disaster-related insights:
+	•	Evacuation zone alerts
+	    -    Shelter, hospital, and fire station locations
+    	-	First-aid and disaster preparation guidance (RAG)
+    	-	Live weather and power outage updates
+
+| Tool                     | Description                                                             |
+|--------------------------|-------------------------------------------------------------------------|
+| Get Disaster Declaration | Access official disaster declarations from FEMA.                       |
+| Is in Evacuation Zone    | Checks if the user’s location is in an evacuation zone.                |
+| Get Weather Alerts       | Real-time weather updates and warnings.                               |
+| Get Power Outage Map     | Provides the latest power outage maps for affected regions.           |
+| Get Nearest Shelter      | Lists shelters with status, capacity, and directions.                 |
+| Get Nearest Hospital     | Locates the closest operational hospitals.                            |
+| Get Nearest Fire Station | Shows the nearest emergency fire response units.                      |
+| RAG Assistance           | Delivers first-aid tips and hurricane preparation guides.             |
+
+
+## Table of Contents for PostgreSQL installation and RAG indexing.
 
 - [Prerequisites](#prerequisites)
 - [Installation and Setup](#installation-and-setup)
@@ -44,7 +70,7 @@ A comprehensive system for vector-based data ingestion and retrieval using Postg
 
 ---
 
-## Installation and Setup
+## Installation and Setup for Postgres
 
 ### 1. Install Homebrew (macOS)
 
@@ -208,7 +234,7 @@ python retriever.py runserver
 Below are sample code snippets for ingestion and retrieval queries. 
 #### NOTE: nake sure documents are present in folder  -- os.getcwd() + "/data/<foldername>/" . Modify the table name as required.  In the below code , folder is os.getcwd() + "/data/HurricaneFirstAid/" and the table name selected is hurricanefirstaid. 
  
-Ingestion Code
+Example of Ingestion Code
 
 ```bash
 import os
@@ -257,7 +283,7 @@ if __name__ == "__main__":
         print(f"An error occurred while making the request: {e}")
 
 ```
-Retrieval Code
+Example of Retrieval Code
 
 ```bash
 import requests
