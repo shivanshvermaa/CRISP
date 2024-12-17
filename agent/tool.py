@@ -411,7 +411,7 @@ def get_nearest_shelter(address: str,
 @tool
 def get_power_outage_map(state:str):
     """
-    Returns a link containing the power outage map for Florida
+    Returns a link containing the power outage map for any mentioned state
     It queries the argis api to get the outage map
 
     Parameters:
@@ -430,6 +430,10 @@ def get_power_outage_map(state:str):
     """
     if state in ['Florida' , 'FL']:
         return "https://www.arcgis.com/apps/dashboards/4833aec638214268b09683ce78ed2edf"
+    if state in ['Texas','TX']:
+        check_outage = "https://poweroutage.us/area/state/texas"
+        report_outage = "https://www.aeptexas.com/outages/"
+        return f"To check outage follow this link {check_outage} and report any outages here: {report_outage}"
 
 # @tool
 # def weather_forecast(city:str,units:str)->Dict:

@@ -3,6 +3,8 @@ import subprocess
 import os
 import yaml
 import uuid
+import datetime
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage,AIMessage
 from langchain_community.llms import OpenAI
@@ -10,7 +12,6 @@ from langchain_openai.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 
 from agent.tool import get_disaster_declaration,is_in_evacuation_zone,get_weather_alerts,get_power_outage_map,get_nearest_hospital,get_nearest_fire_station, get_nearest_shelter,query_rag_system
-
 from agent.graph import create_graph
 
 import dotenv
@@ -20,7 +21,6 @@ dotenv.load_dotenv()
 #def start_flask_server():
 #    subprocess.Popen(["python", "rag/retriever.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #start_flask_server()
-
 @cl.on_chat_start
 def main():
     llm = ChatOpenAI(
@@ -45,14 +45,11 @@ def main():
         [
             (
                 "system",
-                "You are a helpful assistant specializing in providing disaster-related information and data from FEMA sources. "
-                "Your focus is on helping users access, interpret, and utilize FEMA data effectively, especially related to disaster declarations, "
-                "emergency response, and regional support for disaster zones. "
-                "When searching, be persistent and thorough. Use multiple resources and approaches to find the most accurate, relevant information."
+                "You are an expert assistant specializing in disaster-related information and resources. Your role is to help users effectively access, interpret, and utilize data related to disaster declarations, emergency response, preparedness, and regional support. You draw on multiple trusted sources, including FEMA, government agencies, NGOs, and verified public data. Your responses must be precise, actionable, and up-to-date, using the current datetime for accuracy: {datetime}. Be thorough, persistent, and resourceful, ensuring the information you provide is relevant, reliable, and comprehensive."
             ),
             ("placeholder", "{messages}"),
         ]
-    )
+    ).partial(datetime=datetime.datetime.now())
 
 
 
