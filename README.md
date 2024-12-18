@@ -68,6 +68,7 @@
 - [TODO](#todo)
 - [Notes](#notes)
 - [References](#references)
+- [Running the application]()
 
 ---
 
@@ -387,6 +388,8 @@ References
 
 	•	
 
-Feel free to update this README as your project evolves!
+## Running the App locally
+
+
 
 ---
