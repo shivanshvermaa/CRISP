@@ -393,7 +393,8 @@ References
 ```
 python ./rag/retrieval.py
 ```
-### 2. Start the messaging flask app for Whatsapp (need to use postman for making request @ localhost:3000/whatsapp)
+### 2. Start the messaging flask app for Whatsapp 
+(need to use postman for making request @ localhost:3000/whatsapp)
 ```
 python messaging.py
 ```
