@@ -391,7 +391,7 @@ References
 ## Running the App Locally
 ### 1. Start the flask app for RAG
 ```
-python ./rag/retrieval.py
+python ./rag/retriever.py
 ```
 ### 2. Start the messaging flask app for Whatsapp 
 (need to use postman for making request @ localhost:3000/whatsapp)
