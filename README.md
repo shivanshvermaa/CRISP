@@ -68,7 +68,7 @@
 - [TODO](#todo)
 - [Notes](#notes)
 - [References](#references)
-- [Running the application]()
+- [Running the locally](#)
 
 ---
 
@@ -388,7 +388,7 @@ References
 
 	•	
 
-## Running the App locally
+## Running the App Locally
 
 
 
