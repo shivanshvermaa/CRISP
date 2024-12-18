@@ -3,7 +3,12 @@
 ## Agent Hosted
 <a href="http://35.184.51.67/">Website</a> <br>
 <a href="http://35.184.51.67:8000/">CRISP</a> <br>
-<a href="">Demo</a> <br>
+<a href="">Demo</a> <be>
+#### Probable Issues with hosted site 
+	• 	The website is hosted on a free GCP account if there are any concerns accessing the agent please contact the team
+ 	•	The website is "HTTP://" so please continue even if it says unsafe
+	•	Use the QR or contact given below to test whatsapp texting
+ 	
 ## Problem Statement
 	•	Hurricanes bring chaos: severe weather, evacuation needs, and infrastructure disruptions.
 	•	Lack of centralized, real-time information makes decision-making difficult.
