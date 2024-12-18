@@ -68,7 +68,7 @@
 - [TODO](#todo)
 - [Notes](#notes)
 - [References](#references)
-- [Running the locally](#)
+- [Running the locally](#running-the-app-locally)
 
 ---
 
@@ -389,7 +389,16 @@ References
 	•	
 
 ## Running the App Locally
-
-
-
+### 1. Start the flask app for RAG
+```
+python ./rag/retrieval.py
+```
+### 2. Start the messaging flask app for Whatsapp (need to use postman for making request @ localhost:3000/whatsapp)
+```
+python messaging.py
+```
+### 3. Run the chat window
+```
+chainlit run --port 8000 app.py -w
+```
 ---
