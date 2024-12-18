@@ -9,7 +9,7 @@
  		please contact the team
  	•	The website is "HTTP://" so please continue even if it says unsafe
 	•	Use the QR or contact given below to test whatsapp texting
- <img src="https://drive.google.com/file/d/1MqPRhm1oswaZJhg1PgmvZ8owNMMvkDWH/view?usp=sharing">
+ <a href="https://drive.google.com/file/d/1MqPRhm1oswaZJhg1PgmvZ8owNMMvkDWH/view?usp=sharing">Scan QR for whatsapp</a>
  	
 ## Problem Statement
 	•	Hurricanes bring chaos: severe weather, evacuation needs, and infrastructure disruptions.
