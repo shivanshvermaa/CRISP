@@ -1,6 +1,9 @@
 
 # CRISP - Crisis Response and Intelligent Support Platform
-
+## Agent Hosted
+<a href="http://35.184.51.67/">Website</a>
+<a href="http://35.184.51.67:8000/">CRISP</a>
+<a href="">Demo</a>
 ## Problem Statement
 	•	Hurricanes bring chaos: severe weather, evacuation needs, and infrastructure disruptions.
 	•	Lack of centralized, real-time information makes decision-making difficult.
