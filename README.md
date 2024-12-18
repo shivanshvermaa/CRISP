@@ -1,14 +1,14 @@
 
 # CRISP - Crisis Response and Intelligent Support Platform
-## Agent Hosted
+## Agent Hosted [on GCP]
 <a href="http://35.184.51.67/" about="blank">Website</a> <br>
-<a href="http://35.184.51.67:8000/" about="blank">CRISP(chat window)</a> <br>
-<a href="https://youtu.be/6icHD-EJcmc" about="blank">Demo Video</a> <br>
+<a href="http://35.184.51.67:8000/" about="blank">CRISP[chat window]</a> <br>
+<a href="https://youtu.be/6icHD-EJcmc" about="blank">Demo Video[Youtube]</a> <br>
 #### Probable Issues with hosted site 
 	• 	The website is hosted on a free GCP account if there are any concerns accessing the agent 
- 		please contact the team
+ 		please contact the team at rampuriamanya51@gmail.com
  	•	The website is "HTTP://" so please continue even if it says unsafe
-	•	Use the QR or contact given below to test whatsapp texting
+	•	Use the QR or contact given below to test WhatsApp texting
  <a href="https://drive.google.com/file/d/1MqPRhm1oswaZJhg1PgmvZ8owNMMvkDWH/view?usp=sharing" about="blank">Scan QR for whatsapp</a>
  	
 ## Problem Statement
